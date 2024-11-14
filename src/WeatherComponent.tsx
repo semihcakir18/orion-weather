@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import {
   Table,
   TableBody,
@@ -21,36 +20,16 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import SunnyStreet from "./assets/Sunny Street.webp";
 import RainyStreet from "./assets/Rainy Street.webp";
 import Box from "@mui/material/Box";
+import { fetchWeatherData, WeatherResponse } from "./components/Request";
+import CurrentWeatherTable from "./components/CurrentWeatherTable";
+import DailyForecastTable from "./components/DailyForecastTable";
 
 //Arkaplan fotoğraflarını yağmur ihtimaline göre çeşitlendir
 //Boxları component haline getir
 //Bunlar bitince tabloları güzelleştir
-
-interface WeatherResponse {
-  current: {
-    time: string;
-    temperature_2m: number;
-    relative_humidity_2m: number;
-    wind_speed_10m: number;
-    apparent_temperature: number;
-    is_day: number;
-  };
-  hourly: {
-    time: string[];
-    temperature_2m: number[];
-    is_day: number[];
-    precipitation_probability: number[];
-    uv_index: number[];
-  };
-  daily: {
-    weather_code: number[];
-    temperature_2m_max: number[];
-    temperature_2m_min: number[];
-    apparent_temperature_max: number[];
-    apparent_temperature_min: number[];
-    daylight_duration: number[];
-  };
-}
+// data grid kullan
+//url i env donsyasından çek
+//requesti düzenle
 
 import { cities, City } from "./data/cities";
 
@@ -71,30 +50,12 @@ const WeatherComponent: React.FC = () => {
   const handleAccordionChange = () => {
     setExpanded(!expanded);
   };
-let current_params = "temperature_2m,relative_humidity_2m,apparent_temperature,is_day,wind_speed_10m,rain"
-let hourly_params = "temperature_2m,precipitation_probability,uv_index,is_day";
-let daily_params = "weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,daylight_duration"
+
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        const response = await axios.get<WeatherResponse>(
-          "https://api.open-meteo.com/v1/forecast",
-          {
-            params: {
-              latitude: selectedCity.latitude,
-              longitude: selectedCity.longitude,
-              current:
-                current_params,
-              hourly:
-                hourly_params,
-              daily:
-                daily_params,
-              timezone: "auto",
-            },
-          }
-        );
-        console.log(response.data);
-        setWeather(response.data);
+        const data = await fetchWeatherData(selectedCity);
+        setWeather(data);
       } catch (err) {
         setError("Hava durumu bilgileri alınırken bir hata oluştu");
         console.error("API Hatası:", err);
@@ -107,6 +68,7 @@ let daily_params = "weather_code,temperature_2m_max,temperature_2m_min,apparent_
   }, [selectedCity]);
 
   useEffect(() => {
+    // BURAYI DÜZELT !!!!
     if (weather) {
       document.documentElement.style.backgroundImage = `url(${
         weather.current.temperature_2m > 15 ? SunnyStreet : RainyStreet
@@ -153,90 +115,22 @@ let daily_params = "weather_code,temperature_2m_max,temperature_2m_min,apparent_
             ))}
           </Select>
         </FormControl>
-
-        <TableContainer component={Paper} sx={{ mb: 2 }}>
-          <Table>
-            <TableBody>
-              <TableRow>
-                <TableCell>
-                  <b>Sıcaklık</b>
-                </TableCell>
-                <TableCell>{weather.current.temperature_2m}°C</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
-                  <b>Hissedilen Sıcaklık</b>
-                </TableCell>
-                <TableCell>{weather.current.apparent_temperature}°C</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
-                  <b>Şuan</b>
-                </TableCell>
-                <TableCell>
-                  {weather.current.is_day ? "Gündüz" : "Gece"}
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
-                  <b>Nem</b>
-                </TableCell>
-                <TableCell>{weather.current.relative_humidity_2m}%</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
-                  <b>Rüzgar Hızı</b>
-                </TableCell>
-                <TableCell>{weather.current.wind_speed_10m} km/s</TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TableContainer component={Paper}>
-          <Typography variant="h6">
-            <b>Günlük Tahmin</b>
-          </Typography>
-          <Table>
-            <TableBody>
-              <TableRow>
-                <TableCell>
-                  <b>Maksimum Sıcaklık</b>
-                </TableCell>
-                <TableCell>{weather.daily.temperature_2m_max[0]}°C</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
-                  <b>Minimum Sıcaklık</b>
-                </TableCell>
-                <TableCell>{weather.daily.temperature_2m_min[0]}°C</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
-                  <b>Hissedilen Max</b>
-                </TableCell>
-                <TableCell>
-                  {weather.daily.apparent_temperature_max[0]}°C
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
-                  <b>Hissedilen Min</b>
-                </TableCell>
-                <TableCell>
-                  {weather.daily.apparent_temperature_min[0]}°C
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
-                  <b>Gün Işığı Süresi</b>
-                </TableCell>
-                <TableCell>
-                  {(weather.daily.daylight_duration[0] / 3600).toFixed(1)} saat
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </TableContainer>
+        {/* Şu anki durum */}
+        <CurrentWeatherTable
+          temperature={weather.current.temperature_2m}
+          apparentTemperature={weather.current.apparent_temperature}
+          isDay={weather.current.is_day}
+          humidity={weather.current.relative_humidity_2m}
+          windSpeed={weather.current.wind_speed_10m}
+        />
+        {/* Günlük Tahmin */}
+        <DailyForecastTable
+          maxTemp={weather.daily.temperature_2m_max[0]}
+          minTemp={weather.daily.temperature_2m_min[0]}
+          maxFeelsLike={weather.daily.apparent_temperature_max[0]}
+          minFeelsLike={weather.daily.apparent_temperature_min[0]}
+          daylightDuration={weather.daily.daylight_duration[0]}
+        />
       </Box>
 
       {/* Sağ */}
@@ -276,28 +170,38 @@ let daily_params = "weather_code,temperature_2m_max,temperature_2m_min,apparent_
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {weather.hourly.time.slice(0, 24).map((time, index) => (
-                    <TableRow key={time}>
-                      <TableCell>
-                        {new Date(time).toLocaleTimeString("tr-TR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        {weather.hourly.temperature_2m[index]}°C
-                      </TableCell>
-                      <TableCell>
-                        {weather.hourly.is_day[index] ? "Gündüz" : "Gece"}
-                      </TableCell>
-                      <TableCell>
-                        {weather.hourly.precipitation_probability[index]}%
-                      </TableCell>
-                      <TableCell>{weather.hourly.uv_index[index]}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  {weather.hourly.time
+                    .slice(0, 24)
+                    .map((time, index) => {
+                      const hourTime = new Date(time)
+                      const currentTime = new Date()
+                    
+                      if (hourTime < currentTime) {
+                        return null
+                      }
+
+                      return (
+                        <TableRow key={time}>
+                          <TableCell>
+                            {hourTime.toLocaleTimeString("tr-TR", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </TableCell>
+                          <TableCell>{weather.hourly.temperature_2m[index]}°C</TableCell>
+                          <TableCell>
+                            {weather.hourly.is_day[index] ? "Gündüz" : "Gece"}
+                          </TableCell>
+                          <TableCell>
+                            {weather.hourly.precipitation_probability[index]}%
+                          </TableCell>
+                          <TableCell>{weather.hourly.uv_index[index]}</TableCell>
+                        </TableRow>
+                      )
+                    })
+                    .filter(Boolean)}
+                  </TableBody>
+                </Table>
             </TableContainer>
           </AccordionDetails>
         </Accordion>
