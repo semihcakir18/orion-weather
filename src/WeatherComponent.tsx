@@ -1,26 +1,13 @@
 import React, { useState, useEffect } from "react";
+import HourlyForecastAccordion from './components/HourlyForecastAccordion';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Typography,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
+  Autocomplete,
+  TextField,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import SunnyStreet from "./assets/Sunny Street.webp";
-import RainyStreet from "./assets/Rainy Street.webp";
+import SunnyStreet from "./assets/Images/sunny_street.webp";
+import RainyStreet from "./assets/Images/rainy_street.webp";
 import Box from "@mui/material/Box";
-import { fetchWeatherData, WeatherResponse } from "./components/Request";
+import { fetchWeatherData, WeatherResponse } from "./Request";
 import CurrentWeatherTable from "./components/CurrentWeatherTable";
 import DailyForecastTable from "./components/DailyForecastTable";
 
@@ -28,8 +15,9 @@ import DailyForecastTable from "./components/DailyForecastTable";
 //Boxları component haline getir
 //Bunlar bitince tabloları güzelleştir
 // data grid kullan
-//url i env donsyasından çek
-//requesti düzenle
+//env dosyası olustur , url i env donsyasından çek
+//requesti düzenle , yerini düzelt , service yap (ts)
+//interfaceleri ayrı bi dosya
 
 import { cities, City } from "./data/cities";
 
@@ -39,13 +27,6 @@ const WeatherComponent: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedCity, setSelectedCity] = useState<City>(cities[0]);
   const [expanded, setExpanded] = useState<boolean>(false);
-
-  const handleCityChange = (event: any) => {
-    const city = cities.find((c) => c.name === event.target.value);
-    if (city) {
-      setSelectedCity(city);
-    }
-  };
 
   const handleAccordionChange = () => {
     setExpanded(!expanded);
@@ -101,20 +82,25 @@ const WeatherComponent: React.FC = () => {
           minWidth: 0,
         }}
       >
-        <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel>Şehir Seçin</InputLabel>
-          <Select
-            value={selectedCity.name}
-            label="Şehir Seçin"
-            onChange={handleCityChange}
-          >
-            {cities.map((city) => (
-              <MenuItem key={city.name} value={city.name}>
-                {city.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <Autocomplete
+          value={selectedCity}
+          onChange={(event, newValue) => {
+            if (newValue) {
+              setSelectedCity(newValue);
+            }
+          }}
+          options={cities}
+          getOptionLabel={(option) => option.name}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Şehir Seçin"
+              variant="outlined"
+              fullWidth
+            />
+          )}
+          sx={{ mb: 2 }}
+        />
         {/* Şu anki durum */}
         <CurrentWeatherTable
           temperature={weather.current.temperature_2m}
@@ -135,77 +121,18 @@ const WeatherComponent: React.FC = () => {
 
       {/* Sağ */}
       <Box
-        sx={{
-          flex: { xs: "1", md: "0 0 70%" },
-          minWidth: 0,
-        }}
-      >
-        <Accordion expanded={expanded} onChange={handleAccordionChange}>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="hourly-weather-content"
-          >
-            <Typography variant="h6">Saatlik Tahmin</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <TableContainer sx={{ maxHeight: 440 }}>
-              <Table stickyHeader>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>
-                      <b>Saat</b>
-                    </TableCell>
-                    <TableCell>
-                      <b>Sıcaklık</b>
-                    </TableCell>
-                    <TableCell>
-                      <b>Gündüz/Gece</b>
-                    </TableCell>
-                    <TableCell>
-                      <b>Yağış Olasılığı</b>
-                    </TableCell>
-                    <TableCell>
-                      <b>UV İndeksi</b>
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {weather.hourly.time
-                    .slice(0, 24)
-                    .map((time, index) => {
-                      const hourTime = new Date(time)
-                      const currentTime = new Date()
-                    
-                      if (hourTime < currentTime) {
-                        return null
-                      }
-
-                      return (
-                        <TableRow key={time}>
-                          <TableCell>
-                            {hourTime.toLocaleTimeString("tr-TR", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </TableCell>
-                          <TableCell>{weather.hourly.temperature_2m[index]}°C</TableCell>
-                          <TableCell>
-                            {weather.hourly.is_day[index] ? "Gündüz" : "Gece"}
-                          </TableCell>
-                          <TableCell>
-                            {weather.hourly.precipitation_probability[index]}%
-                          </TableCell>
-                          <TableCell>{weather.hourly.uv_index[index]}</TableCell>
-                        </TableRow>
-                      )
-                    })
-                    .filter(Boolean)}
-                  </TableBody>
-                </Table>
-            </TableContainer>
-          </AccordionDetails>
-        </Accordion>
-      </Box>
+  sx={{
+    flex: { xs: "1", md: "0 0 70%" },
+    minWidth: 0,
+  }}
+>
+  <HourlyForecastAccordion
+    expanded={expanded}
+    onAccordionChange={handleAccordionChange}
+    hourlyData={weather.hourly}
+    timezone={weather.timezone}
+  />
+</Box>
     </Box>
   );
 };
