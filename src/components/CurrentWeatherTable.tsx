@@ -8,14 +8,8 @@ import {
   TableRow,
   Paper,
 } from "@mui/material";
+import {CurrentWeatherProps} from "../Interfaces"
 
-interface CurrentWeatherProps {
-  temperature: number;
-  apparentTemperature: number;
-  isDay: number;
-  humidity: number;
-  windSpeed: number;
-}
 
 const CurrentWeatherTable: React.FC<CurrentWeatherProps> = ({
   temperature,

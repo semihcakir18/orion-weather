@@ -12,19 +12,8 @@ import {
   AccordionDetails,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import {HourlyForecastProps} from "../Interfaces"
 
-interface HourlyForecastProps {
-  expanded: boolean;
-  onAccordionChange: () => void;
-  hourlyData: {
-    time: string[];
-    temperature_2m: number[];
-    is_day: number[];
-    precipitation_probability: number[];
-    uv_index: number[];
-  };
-  timezone:string;
-}
 
 const HourlyForecastAccordion: React.FC<HourlyForecastProps> = ({
   expanded,
@@ -32,6 +21,7 @@ const HourlyForecastAccordion: React.FC<HourlyForecastProps> = ({
   hourlyData,
   timezone  
 }) => {
+  
   return (
     <Accordion expanded={expanded} onChange={onAccordionChange}>
       <AccordionSummary

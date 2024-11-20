@@ -1,32 +1,32 @@
 import React, { useState, useEffect } from "react";
-import HourlyForecastAccordion from './components/HourlyForecastAccordion';
-import {
-  Autocomplete,
-  TextField,
-} from "@mui/material";
+import HourlyForecastAccordion from "./components/HourlyForecastAccordion";
+import { Autocomplete, TextField } from "@mui/material";
 import SunnyStreet from "./assets/Images/sunny_street.webp";
 import RainyStreet from "./assets/Images/rainy_street.webp";
+import AboutToRain from "./assets/Images/about_to_rain.webp";
+import Night from "./assets/Images/night.webp";
 import Box from "@mui/material/Box";
-import { fetchWeatherData, WeatherResponse } from "./Request";
+import { fetchWeatherData } from "./Service";
+import { WeatherResponse } from "./Interfaces";
 import CurrentWeatherTable from "./components/CurrentWeatherTable";
 import DailyForecastTable from "./components/DailyForecastTable";
-
+import { cities, City } from "./data/cities";
+import { getWeatherDescription,isLikelyToRain} from "./basic_functions";
 //Arkaplan fotoğraflarını yağmur ihtimaline göre çeşitlendir
 //Boxları component haline getir
 //Bunlar bitince tabloları güzelleştir
-// data grid kullan
+//data grid kullan
 //env dosyası olustur , url i env donsyasından çek
 //requesti düzenle , yerini düzelt , service yap (ts)
-//interfaceleri ayrı bi dosya
 
-import { cities, City } from "./data/cities";
+
 
 const WeatherComponent: React.FC = () => {
   const [weather, setWeather] = useState<WeatherResponse | null>(null);
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedCity, setSelectedCity] = useState<City>(cities[0]);
-  const [expanded, setExpanded] = useState<boolean>(false);
+  const [expanded, setExpanded] = useState<boolean>(true);
 
   const handleAccordionChange = () => {
     setExpanded(!expanded);
@@ -49,11 +49,20 @@ const WeatherComponent: React.FC = () => {
   }, [selectedCity]);
 
   useEffect(() => {
-    // BURAYI DÜZELT !!!!
     if (weather) {
-      document.documentElement.style.backgroundImage = `url(${
-        weather.current.temperature_2m > 15 ? SunnyStreet : RainyStreet
-      })`;
+      let backgroundImage;
+      if (weather.current.is_day === 1) {
+        if (isLikelyToRain(weather)) {
+          backgroundImage = RainyStreet;
+        } else {
+          backgroundImage =
+            weather.current.temperature_2m > 15 ? SunnyStreet : AboutToRain;
+        }
+      } else {
+        backgroundImage = Night;
+      }
+
+      document.documentElement.style.backgroundImage = `url(${backgroundImage})`;
       document.documentElement.style.backgroundSize = "cover";
       document.documentElement.style.backgroundPosition = "center";
       document.documentElement.style.backgroundRepeat = "no-repeat";
@@ -102,6 +111,7 @@ const WeatherComponent: React.FC = () => {
           sx={{ mb: 2 }}
         />
         {/* Şu anki durum */}
+
         <CurrentWeatherTable
           temperature={weather.current.temperature_2m}
           apparentTemperature={weather.current.apparent_temperature}
@@ -116,25 +126,27 @@ const WeatherComponent: React.FC = () => {
           maxFeelsLike={weather.daily.apparent_temperature_max[0]}
           minFeelsLike={weather.daily.apparent_temperature_min[0]}
           daylightDuration={weather.daily.daylight_duration[0]}
+          weather_code={getWeatherDescription(weather.daily.weather_code[0])}
         />
       </Box>
 
       {/* Sağ */}
       <Box
-  sx={{
-    flex: { xs: "1", md: "0 0 70%" },
-    minWidth: 0,
-  }}
->
-  <HourlyForecastAccordion
-    expanded={expanded}
-    onAccordionChange={handleAccordionChange}
-    hourlyData={weather.hourly}
-    timezone={weather.timezone}
-  />
-</Box>
+        sx={{
+          flex: { xs: "1", md: "0 0 70%" },
+          minWidth: 0,
+        }}
+      >
+        <HourlyForecastAccordion
+          expanded={expanded}
+          onAccordionChange={handleAccordionChange}
+          hourlyData={weather.hourly}
+          timezone={weather.timezone}
+        />
+      </Box>
     </Box>
   );
+  
 };
 
 export default WeatherComponent;
