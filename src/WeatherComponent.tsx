@@ -12,12 +12,7 @@ import CurrentWeatherTable from "./components/CurrentWeatherTable";
 import DailyForecastTable from "./components/DailyForecastTable";
 import { cities, City } from "./data/cities";
 import { getWeatherDescription,isLikelyToRain} from "./basic_functions";
-//Arkaplan fotoğraflarını yağmur ihtimaline göre çeşitlendir
-//Boxları component haline getir
-//Bunlar bitince tabloları güzelleştir
-//data grid kullan
-//env dosyası olustur , url i env donsyasından çek
-//requesti düzenle , yerini düzelt , service yap (ts)
+
 
 
 
@@ -130,7 +125,7 @@ const WeatherComponent: React.FC = () => {
         />
       </Box>
 
-      {/* Sağ */}
+      {/* Saatlik */}
       <Box
         sx={{
           flex: { xs: "1", md: "0 0 70%" },
